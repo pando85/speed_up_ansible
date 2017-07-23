@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Speed Up Ansible</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/night.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Speed Up Ansible</h2>
+				</section>
+				<section>
+					<img src="/img/ansible_logo_invert.png" style="background:none;border:none" width="175" height="175">
+					<h3>Ansible</h3>
+					<aside class="notes">
+						Ansible is a simple tool to automate apps and IT infrastructure:
+					</aside>
+					<ul>
+						<li type="circle">Application Deployment</li>
+						<li type="circle">Configuration Management</li>
+						<li type="circle">Continuous Delivery</li>
+					</ul>
+				</section>
+				<section>
+					<h3>Pros:</h3>
+					<ul>
+					    <li type="circle">Easy learning curve</li>
+					    <li type="circle">Nothing to install on remote hosts</li>
+					    <li type="circle">Push-Based</li>
+					</ul>
+				</section>
+				<section>
+					<h3>Slow as hell</h3>
+					<img src="https://imgs.xkcd.com/comics/compiling.png" style="background:none;border:none" width="450" height="450">
+				</section>
+				<section>
+					<h3>How to solve this problem?</h3>
+					<img src="img/thinking.png" style="background:none;border:none" width="450" height="450">
+				</section>
+				<section>
+					<h3>Explicar ssh en ansible</h3>
+				</section>
+				<section>
+					<h3>SSH Multiplexing</h3>
+					<img src="gif/ssh_multiplexing.gif" style="background:none;border:none" height="450">
+				</section>
+				<section>
+					<h3>Como configurarlo</h3>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				history: true,
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
