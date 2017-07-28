@@ -28,42 +28,335 @@
 					<h2>Speed Up Ansible</h2>
 				</section>
 				<section>
-					<img src="/img/ansible_logo_invert.png" style="background:none;border:none" width="175" height="175">
-					<h3>Ansible</h3>
-					<aside class="notes">
-						Ansible is a simple tool to automate apps and IT infrastructure:
-					</aside>
-					<ul>
-						<li type="circle">Application Deployment</li>
-						<li type="circle">Configuration Management</li>
-						<li type="circle">Continuous Delivery</li>
-					</ul>
+					<section>
+						<img src="/img/ansible_logo_invert.png" style="background:none;border:none" width="175" height="175">
+						<h3>Ansible</h3>
+						<aside class="notes">
+							Ansible is a simple tool to automate apps and IT infrastructure:
+						</aside>
+						<ul>
+							<li type="circle">Application Deployment</li>
+							<li type="circle">Configuration Management</li>
+							<li type="circle">Continuous Delivery</li>
+						</ul>
+					</section>
+					<section>
+						<h3>Pros:</h3>
+						<ul>
+						    <li type="circle">Easy learning curve</li>
+						    <li type="circle">Nothing to install on remote hosts</li>
+						    <li type="circle">Push-Based</li>
+						</ul>
+					</section>
+					<section>
+						<h3>Slow as hell</h3>
+						<img src="https://imgs.xkcd.com/comics/compiling.png" style="background:none;border:none" width="450" height="450">
+					</section>
+					<section>
+						<h3>How to solve this problem?</h3>
+						<img src="img/thinking.png" style="background:none;border:none" width="450" height="450">
+					</section>
 				</section>
 				<section>
-					<h3>Pros:</h3>
-					<ul>
-					    <li type="circle">Easy learning curve</li>
-					    <li type="circle">Nothing to install on remote hosts</li>
-					    <li type="circle">Push-Based</li>
-					</ul>
+					<section>
+						<h3>SSH Multiplexing</h3>
+						<br>
+						<h4>Ansible use OpenSSH</h4>
+						&darr;
+						<h4>Manage communications</h4>
+						&darr;
+						<h4>SSH Multiplexing by default</h4>
+					</section>
+					<section>
+						<h3>SSH Multiplexing</h3>
+						<img src="gif/ssh_multiplexing.gif" style="background:none;border:none" height="450">
+					</section>
+					<section>
+						<h3>Default</h3>
+						<font size="5">
+						<table style="width:80%">
+						  	<tr>
+						    	<th>ControlMaster</th>
+						    	<th>auto</th>
+						  	</tr>
+						  	<tr>
+						    	<td>ControlPath</td>
+						    	<td>$HOME/.ansible/cp/ansible-ssh-%%h-%%p-%%r</td>
+	           			  	</tr>
+	           			  	<tr>
+						    	<td>ControlPersist</td>
+						    	<td>60s</td>
+						  	</tr>
+						</table>
+						</font>
+						<br>
+						<h3>ansible.cfg</h3>
+							<pre><code data-trim data-noescape>
+								[ssh_connection]
+								ssh_args =  -o ControlMaster=auto -o ControlPersist=30m
+								control_path = %(directory)s/ansible-%%r@%%h:%%p
+								control_path_dir = ~/.ssh
+							</code></pre>
+					</section>
 				</section>
 				<section>
-					<h3>Slow as hell</h3>
-					<img src="https://imgs.xkcd.com/comics/compiling.png" style="background:none;border:none" width="450" height="450">
+					<section>
+						<h3>Ansible tasks execution</h3>
+						<ol>
+							<li>Generates Python script</li>
+							<li>Copy to remote host</li>
+							<li>Executes the Python script</li>
+						</ol>
+					</section>
+					<section>
+						<h3>Pipelining</h3>
+						<br>
+							<pre style="width:60%;text-align: center;"><code class="bash" data-trim data-noescape >
+								cat python.py | ssh example.org
+							</code></pre>
+						<br>
+						<p>Optimization that allows Ansible execute the Python script by piping it to the SSH session</p>
+					</section>
+					<section>
+						<h3>Configure pipelining</h3>
+						<h5>ansible.cfg</h5>
+							<pre><code data-trim data-noescape>
+								[ssh_connection]
+								pipelining = True
+							</code></pre>
+						<br>
+						<h5>playbook.yml</h5>
+							<pre><code class="yaml" data-trim data-noescape>
+							- hosts: all
+							  vars:
+							      ansible_ssh_pipelining: no
+							  tasks:
+							    - name: Enable ansible pipelining
+							      lineinfile:
+							        regexp: '^\w+\s+requiretty'
+							        dest: /etc/sudoers
+							        state: absent
+							      tags:
+							        - enable_pipelining
+							</code></pre>
+					</section>
 				</section>
 				<section>
-					<h3>How to solve this problem?</h3>
-					<img src="img/thinking.png" style="background:none;border:none" width="450" height="450">
+					<section>
+						<h3>Facts</h3>
+							<pre><code class="yaml" style="width:90%;" data-trim data-noescape>
+								- hosts: all
+								  remote_user: root
+								  tasks:
+								  - name: ensure apache is at the latest version
+								    yum: name=httpd state=latest
+								  - name: write the apache config file
+								    template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+
+								- hosts: all
+								  remote_user: root
+								  tasks:
+								  - name: ensure postgresql is at the latest version
+								    yum: name=postgresql state=latest
+								  - name: ensure that postgresql is started
+								    service: name=postgresql state=started
+							</code></pre>
+							<br>
+							<p>Between play and play, facts are always gathered</p>
+					</section>
+					<section>
+						<h3>Facts not needed</h3>
+						<br>
+						<ul>
+							<li type="circle">Declare in playbooks:
+								<pre><code class="yaml" style="width:90%;" data-trim data-noescape>
+								- hosts: all
+								  gather_facts: False
+								  ...
+							</code></pre>
+							</li>
+							<br>
+							<li type="circle">Make it by default:</li>
+							<pre><code style="width:90%;" data-trim data-noescape>
+								[defaults]
+								gathering = explicit
+							</code></pre>
+						</ul>
+					</section>
+					<section>
+						<h3>Facts Caching</h3>
+						<ul>
+							<li type="circle">Json</li>
+							<li type="circle">Redis</li>
+							<li type="circle">memcached</li>
+						</ul>
+						<br>
+						<br>
+						<br>
+						<h5>ansible.cfg</h5>
+							<pre><code style="width:90%;" data-trim data-noescape>
+								[defaults]
+								gathering = smart
+								fact_caching = jsonfile
+								fact_caching_connection = ./.facts
+								fact_caching_timeout = 86400
+							</code></pre>
+					</section>
 				</section>
 				<section>
-					<h3>Explicar ssh en ansible</h3>
+					<section>
+						<h3>Parallelism</h3>
+						<img src="img/ansible_forks.png" style="background:none;border:none" width="450" height="450">
+						<p>Number of hosts configured in parallel</p>
+					</section>
+					<section>
+						<h3>Parallelism</h3>
+						<br>
+						<ul>
+							<li type="circle">ansible.cfg
+								<pre><code style="width:90%;" data-trim data-noescape>
+									[defaults]
+									forks = 25
+								</code></pre>
+							</li>
+							<li type="circle">parameter
+								<pre><code class="bash" style="width:90%;" data-trim data-noescape>
+								--forks 25
+								</code></pre>
+							</li>
+							<li type="circle">enviroment var
+							</li>
+								<pre><code class="bash" data-trim data-noescape>
+								ANSIBLE_FORKS=25
+								</code></pre>
+						</ul>
+					</section>
+					<section>
+						<h3>Parallelism</h3>
+						<p>Limit with <b>SERIAL</b> at play level</p>
+						<br>
+						<div style="width: 100%;overflow:auto;">
+						    <div style="float:left; width: 50%">
+								<pre><code class="yaml" style="width:40%;" data-trim data-noescape>
+								- hosts: all
+								  serial: 3
+								</code></pre>
+								<pre><code class="yaml" style="width:40%;" data-trim data-noescape>
+								- hosts: all
+								  serial:
+								  - 1
+								  - 5
+								  - 10
+								</code></pre>
+						    </div>
+						    <div style="float:right; width: 50%">
+								<pre><code class="yaml" style="width:50%;" data-trim data-noescape>
+								- hosts: all
+								  serial: "30%"
+								</code></pre>
+								<pre><code class="yaml" style="width:50%;" data-trim data-noescape>
+								- hosts: all
+								  serial:
+								  - 1
+								  - 5
+								  - "20%"
+								</code></pre>
+						    </div>
+						    <div style="clear:both"></div>
+						</div>
+					</section>
+					<section>
+						<h3>Parallelism</h3>
+						<br>
+						<h4>Strategies</h4>
+						<ul>
+							<li type="circle">linear</li>
+							<li type="circle">serial</li>
+							<li type="circle">strategy</li>
+						</ul>
+					</section>
 				</section>
 				<section>
-					<h3>SSH Multiplexing</h3>
-					<img src="gif/ssh_multiplexing.gif" style="background:none;border:none" height="450">
+					<section>
+						<h3>Install packages or update</h3>
+						<br>
+						<h5>Mirrors</h5>
+						<p>Tools like yum's <b>reposync</b> or <b>apt-cacher-ng</b></p>
+						<br>
+						<h5>Proxy cache</h5>
+						<pre><code class="yaml" style="width:70%;" data-trim data-noescape>
+						- name: Update all packages (cache)
+						  run_once: true
+						  delegate_to: "{{ play_hosts[0] }}"
+						  yum: name=* state=latest
+
+						- name: Update all packages
+						  yum: name=* state=latest
+						</code></pre>
+					</section>
+					<section>
+						<h3>Deploying inmutable instances</h3>
+						<br>
+						<br>
+						<p>Create an updated instance with <b>ec2_ami</b> Ansible module, let you deploy faster and secured</p>
+					</section>
 				</section>
 				<section>
-					<h3>Como configurarlo</h3>
+					<section>
+						<h3>with_items</h3>
+						<br>
+						<pre><code class="yaml" style="width:70%;" data-trim data-noescape>
+						- name: Installing basic packages
+						  yum:
+						    name: "{{ item }}"
+						    state: latest
+						  with_items:
+						    - curl
+						    - gcc
+						    - bc
+						    - net-tools
+						    - unzip
+						    - rsync
+						    - bash-completion
+						</code></pre>
+					</section>
+					<section>
+						<h3>APT cache time</h3>
+						<br>
+						<pre><code class="yaml" style="width:70%;" data-trim data-noescape>
+						- name: Installing useful packages
+						  apt:
+						    name: "{{ item }}"
+						    update_cache: yes
+						    cache_valid_time: 3600
+						  with_items:
+						    - vim
+						    - htop
+						</code></pre>
+					</section>
+					<section>
+						<h3>Async tasks</h3>
+						<pre><code class="yaml" style="width:100%;" data-trim data-noescape>
+						- name: "Running tests {{ running_test_level }}"
+						  shell: "{{ available_tests[running_test_level] }} {{ item }}"
+						  with_items: "{{ range(tests_parallel_executions|int) | list }}"
+						  async: 400
+						  poll: 0
+						  register: run_tests
+
+						- name: 'Take return of tests'
+						  async_status: jid={{ run_tests.results[item].ansible_job_id }}
+						  register: job_result
+						  until: job_result.finished
+						  retries: 1000
+						  delay: 20
+						  with_items: "{{ range(tests_parallel_executions|int) | list }}"
+						</code></pre>
+					</section>
+					<section>
+					<h2>Thanks!</h2>
+					<h3>Any questions???</h3>
+					</section>
 				</section>
 			</div>
 		</div>
@@ -81,7 +374,7 @@
 					{ src: 'plugin/markdown/marked.js' },
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
-					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad();} }
 				]
 			});
 		</script>
